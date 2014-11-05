@@ -124,7 +124,17 @@
 		add: function(number, unit) {
 			var factor = multipliers[unit] || multipliers.day;
 			if (typeof factor == 'number') {
-				this.setTime(this.getTime() + (factor * number));
+				// Get the offset from the current time.
+				var oldOffset = this.proxy.getTimezoneOffset();
+				
+				// Set the new time.
+			        this.proxy.setTime(this.proxy.getTime() + (factor * number));
+				
+				// Check to see if we've crossed a daylight savings time boundry, if so convert to a number of milliseconds to add back to the diff.
+				OffsetDiff = oldOffset - this.proxy.getTimezoneOffset();
+				
+				// Reset the time to account for daylight savings time.
+	            		this.proxy.setTime(this.proxy.getTime() - (OffsetDiff * 60 * 1000));
 			} else {
 				factor.add(this, number);
 			}
@@ -149,7 +159,12 @@
 			var factor = multipliers[unit] || multipliers.day;
 			if (typeof factor == 'number') {
 				// multiply
-				unitDiff = (this.getTime() - dateObj.getTime()) / factor;
+			
+				// Check to see if we've crossed a daylight savings time boundry, if so convert to a number of milliseconds to add back to the diff.
+				var OffsetDiff = (dateObj.proxy.getTimezoneOffset() - this.proxy.getTimezoneOffset()) * 60 * 1000;
+				
+				// Now find the difference, add back in the offset and then divide by the factor.
+		                var unitDiff = (this.proxy.getTime() - dateObj.proxy.getTime() + OffsetDiff) / factor;
 			} else {
 				// run function
 				unitDiff = factor.diff(this, dateObj);
